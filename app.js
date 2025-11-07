@@ -1,5 +1,5 @@
 // Configuració
-const GAS_URL = 'https://script.google.com/macros/s/AKfycby6nTKSzHFZMgcpZFTNvf8_SFkUZJBcxjEb-KCj-8HCz6QwQxdCsVNfa2sUPr_fTijt/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzc3n6zjYlx2m7Ta13hlqIoYdjvYB_UCIPf3DW1TQHSX4cSgB7dc0nSuUWvybmKWEoZ/exec';
 
 // Carregar reserves en carregar la pàgina
 document.addEventListener('DOMContentLoaded', function() {
