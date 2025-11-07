@@ -1,5 +1,5 @@
 // Configuració - CANVIA AQUÍ AMB LA TEVA URL!
-const GAS_URL = 'https://script.google.com/macros/s/AKfycby6nTKSzHFZMgcpZFTNvf8_SFkUZJBcxjEb-KCj-8HCz6QwQxdCsVNfa2sUPr_fTijt/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyMBzaSSGHHDxSYxm3SlDbwtEUERCyi2CGznsM7HS_01vb5MJ-_AGQaKkQGYRs5Kc9w/exec';
 
 // Carregar reserves en carregar la pàgina
 document.addEventListener('DOMContentLoaded', function() {
