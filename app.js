@@ -1,6 +1,7 @@
 // Configuració
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwDZoiG0lEuMHakCGP3O3QzrVMmM1xP4nYB66ziMsLKK1G2aGT4R4u9HesaOQEyb1eg/exec';
 
+
 // Carregar reserves en carregar la pàgina
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Inicialitzant aplicació...');
