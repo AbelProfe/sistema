@@ -222,3 +222,54 @@ button:disabled {
 .btn-verificar:hover {
   background-color: #138496;
 }
+/* Estats de reserva */
+.estat-pendent {
+  background-color: #f39c12;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.estat-confirmat {
+  background-color: #27ae60;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.estat-ocupat {
+  background-color: #e74c3c;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.estat-completat {
+  background-color: #3498db;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.estat-cancelat {
+  background-color: #95a5a6;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.reserva-timestamp {
+  font-size: 12px;
+  color: #7f8c8d;
+  margin-top: 5px;
+}
