@@ -1,7 +1,6 @@
 // Configuració
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwDZoiG0lEuMHakCGP3O3QzrVMmM1xP4nYB66ziMsLKK1G2aGT4R4u9HesaOQEyb1eg/exec';
 
-
 // Carregar reserves en carregar la pàgina
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Inicialitzant aplicació...');
@@ -57,7 +56,30 @@ function carregarReserves() {
     document.head.appendChild(script);
 }
 
-// Funció per mostrar reserves
+// Funció per verificar disponibilitat abans de reservar
+async function verificarDisponibilitat(dataEntrada, dataSortida) {
+  return new Promise((resolve) => {
+    const callbackName = 'disponibilitatCallback_' + new Date().getTime();
+    const script = document.createElement('script');
+    
+    window[callbackName] = function(data) {
+      document.head.removeChild(script);
+      delete window[callbackName];
+      resolve(data);
+    };
+    
+    script.src = `${GAS_URL}?callback=${callbackName}&action=verificarDisponibilitat&dataEntrada=${dataEntrada}&dataSortida=${dataSortida}`;
+    script.onerror = function() {
+      document.head.removeChild(script);
+      delete window[callbackName];
+      resolve({ success: false, error: 'Error de connexió' });
+    };
+    
+    document.head.appendChild(script);
+  });
+}
+
+// Funció per mostrar reserves (AMB COLORS D'ESTAT)
 function mostrarReserves(dades) {
     const reservesList = document.getElementById('reservesList');
     
@@ -72,11 +94,18 @@ function mostrarReserves(dades) {
     reserves.forEach((reserva, index) => {
         const [timestamp, entrada, sortida, nom, telefon, estat, pagament] = reserva;
         
+        // Determinar la classe CSS segons l'estat
+        let classeEstat = 'estat-pendent';
+        if (estat === 'Confirmat') classeEstat = 'estat-confirmat';
+        if (estat === 'Ocupat') classeEstat = 'estat-ocupat';
+        if (estat === 'Completat') classeEstat = 'estat-completat';
+        if (estat === 'Cancelat') classeEstat = 'estat-cancelat';
+        
         html += `
             <div class="reserva-item">
                 <div class="reserva-header">
                     <span class="reserva-nom">${nom}</span>
-                    <span class="reserva-estat estat-pendent">${estat}</span>
+                    <span class="${classeEstat}">${estat}</span>
                 </div>
                 <div class="reserva-dates">
                     📅 ${entrada} → ${sortida}
@@ -87,6 +116,9 @@ function mostrarReserves(dades) {
                 <div class="reserva-pagament">
                     💰 Pagament: ${pagament}
                 </div>
+                <div class="reserva-timestamp">
+                    ⏰ Registre: ${new Date(timestamp).toLocaleString('ca-ES')}
+                </div>
             </div>
         `;
     });
@@ -94,68 +126,69 @@ function mostrarReserves(dades) {
     reservesList.innerHTML = html;
 }
 
-// Funció per afegir reserves (POST normal)
+// Funció per afegir reserves (AMB VERIFICACIÓ DE DISPONIBILITAT)
 async function afegirReserva(event) {
-    event.preventDefault();
+  event.preventDefault();
+  
+  const form = event.target;
+  const button = form.querySelector('button[type="submit"]');
+  const originalText = button.textContent;
+  
+  button.disabled = true;
+  button.textContent = 'Verificant...';
+  
+  const novaReserva = {
+    dataEntrada: document.getElementById('dataEntrada').value,
+    dataSortida: document.getElementById('dataSortida').value,
+    nom: document.getElementById('nom').value,
+    telefon: document.getElementById('telefon').value
+  };
+  
+  console.log('📤 Verificant disponibilitat...', novaReserva);
+  
+  try {
+    // PRIMER: Verificar disponibilitat
+    const resultatDisponibilitat = await verificarDisponibilitat(novaReserva.dataEntrada, novaReserva.dataSortida);
     
-    const form = event.target;
-    const button = form.querySelector('button[type="submit"]');
-    const originalText = button.textContent;
+    if (!resultatDisponibilitat.success) {
+      throw new Error('Error verificant disponibilitat: ' + resultatDisponibilitat.error);
+    }
     
-    button.disabled = true;
+    if (!resultatDisponibilitat.disponible) {
+      throw new Error(resultatDisponibilitat.message);
+    }
+    
     button.textContent = 'Afegint...';
     
-    const novaReserva = {
-        dataEntrada: document.getElementById('dataEntrada').value,
-        dataSortida: document.getElementById('dataSortida').value,
-        nom: document.getElementById('nom').value,
-        telefon: document.getElementById('telefon').value
-    };
+    // SEGON: Si està disponible, fer la reserva
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(novaReserva)
+    });
     
-    console.log('📤 Enviant reserva:', novaReserva);
+    console.log('✅ Reserva enviada (mode no-cors)');
     
-    try {
-        // Per POST podem intentar fer servir fetch normal
-        // Si falla, podem implementar un formulari hidden
-        const response = await fetch(GAS_URL, {
-            method: 'POST',
-            mode: 'no-cors', // Important: no-cors per evitar errors
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(novaReserva)
-        });
-        
-        // Amb no-cors no podem llegir la resposta, però l'acció es realitza
-        console.log('✅ Reserva enviada (mode no-cors)');
-        
-        // Netejar formulari
-        form.reset();
-        
-        // Mostrar missatge d'èxit
-        const reservesList = document.getElementById('reservesList');
-        reservesList.innerHTML = `<p class="success">✅ Reserva afegida correctament</p>` + reservesList.innerHTML;
-        
-        // Actualitzar llista després d'un moment
-        setTimeout(() => carregarReserves(), 2000);
-        
-    } catch (error) {
-        console.error('❌ Error afegint reserva:', error);
-        
-        // Intentem amb mètode alternatiu
-        try {
-            await afegirReservaAlternatiu(novaReserva);
-            form.reset();
-            const reservesList = document.getElementById('reservesList');
-            reservesList.innerHTML = `<p class="success">✅ Reserva afegida (mètode alternatiu)</p>` + reservesList.innerHTML;
-            setTimeout(() => carregarReserves(), 2000);
-        } catch (altError) {
-            alert(`Error: ${altError.message}\n\nLa reserva pot haver-se afegit igualment. Actualitza la llista.`);
-        }
-    } finally {
-        button.disabled = false;
-        button.textContent = originalText;
-    }
+    // Netejar formulari
+    form.reset();
+    
+    // Mostrar missatge d'èxit
+    const reservesList = document.getElementById('reservesList');
+    reservesList.innerHTML = `<p class="success">✅ Reserva afegida correctament (estat: Pendent)</p>` + reservesList.innerHTML;
+    
+    // Actualitzar llista després d'un moment
+    setTimeout(() => carregarReserves(), 2000);
+    
+  } catch (error) {
+    console.error('❌ Error:', error);
+    alert(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
 }
 
 // Mètode alternatiu per afegir reserves (formulari hidden)
